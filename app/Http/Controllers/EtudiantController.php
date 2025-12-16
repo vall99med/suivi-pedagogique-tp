@@ -2,63 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Etudiant;
+use App\Models\Enseignant;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
 
 class EtudiantController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // Liste des étudiants
     public function index()
     {
-        //
+        $etudiants = Etudiant::with('enseignant')->get();
+
+        return Inertia::render('Etudiants', [
+            'etudiants' => $etudiants
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    // Formulaire création
     public function create()
     {
-        //
+        $enseignants = Enseignant::all();
+
+        return Inertia::render('EtudiantForm', [
+            'enseignants' => $enseignants
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Stockage étudiant
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'matricule' => 'required|unique:etudiants',
+            'nom' => 'required',
+            'prenom' => 'required',
+            'filiere' => 'required',
+            'niveau' => 'required|integer',
+            'enseignant_id' => 'nullable|exists:enseignants,id',
+        ]);
+
+        Etudiant::create($request->all());
+
+        return redirect()->route('etudiants.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // Formulaire édition
+    public function edit(Etudiant $etudiant)
     {
-        //
+        $enseignants = Enseignant::all();
+
+        return Inertia::render('EtudiantForm', [
+            'etudiant' => $etudiant,
+            'enseignants' => $enseignants
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    // Mise à jour étudiant
+    public function update(Request $request, Etudiant $etudiant)
     {
-        //
+        $request->validate([
+            'matricule' => 'required|unique:etudiants,matricule,' . $etudiant->id,
+            'nom' => 'required',
+            'prenom' => 'required',
+            'filiere' => 'required',
+            'niveau' => 'required|integer',
+            'enseignant_id' => 'nullable|exists:enseignants,id',
+        ]);
+
+        $etudiant->update($request->all());
+
+        return redirect()->route('etudiants.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    // Suppression étudiant
+    public function destroy(Etudiant $etudiant)
     {
-        //
-    }
+        $etudiant->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->route('etudiants.index');
     }
 }
