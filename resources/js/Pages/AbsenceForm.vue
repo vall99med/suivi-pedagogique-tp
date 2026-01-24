@@ -2,92 +2,84 @@
 import { useForm, Link } from '@inertiajs/vue3'
 
 const props = defineProps({
-  etudiant: {
+  absence: {
     type: Object,
     default: null
   },
-  enseignants: {
+  etudiants: {
     type: Array,
     default: () => []
   }
 })
 
 const form = useForm({
-  matricule: props.etudiant?.matricule || '',
-  nom: props.etudiant?.nom || '',
-  prenom: props.etudiant?.prenom || '',
-  filiere: props.etudiant?.filiere || '',
-  niveau: props.etudiant?.niveau || '',
-  enseignant_id: props.etudiant?.enseignant_id || '',
+  etudiant_id: props.absence?.etudiant_id || '',
+  date: props.absence?.date || new Date().toISOString().split('T')[0],
+  motif: props.absence?.motif || '',
+  justifiee: props.absence?.justifiee || false,
+  observation: props.absence?.observation || '',
 })
 
 function submit() {
-  if (props.etudiant?.id) {
-    // Mode modification
-    form.put(`/etudiants/${props.etudiant.id}`)
+  if (props.absence?.id) {
+    form.put(`/absences/${props.absence.id}`)
   } else {
-    // Mode création
-    form.post('/etudiants')
+    form.post('/absences')
   }
 }
 </script>
 
 <template>
   <div class="page">
-    <h1>{{ etudiant ? 'Modifier étudiant' : 'Ajouter étudiant' }}</h1>
+    <h1>{{ absence ? 'Modifier une absence' : 'Enregistrer une absence' }}</h1>
 
     <form @submit.prevent="submit" class="form-container">
       <div class="form-group">
-        <label>Matricule</label>
-        <input v-model="form.matricule" type="text" required />
-        <span v-if="form.errors.matricule" class="error">{{ form.errors.matricule }}</span>
-      </div>
-
-      <div class="form-group">
-        <label>Nom</label>
-        <input v-model="form.nom" type="text" required />
-        <span v-if="form.errors.nom" class="error">{{ form.errors.nom }}</span>
-      </div>
-
-      <div class="form-group">
-        <label>Prénom</label>
-        <input v-model="form.prenom" type="text" required />
-        <span v-if="form.errors.prenom" class="error">{{ form.errors.prenom }}</span>
-      </div>
-
-      <div class="form-group">
-        <label>Filière</label>
-        <input v-model="form.filiere" type="text" required />
-        <span v-if="form.errors.filiere" class="error">{{ form.errors.filiere }}</span>
-      </div>
-
-      <div class="form-group">
-        <label>Niveau</label>
-        <input type="number" v-model="form.niveau" required />
-        <span v-if="form.errors.niveau" class="error">{{ form.errors.niveau }}</span>
-      </div>
-
-      <div class="form-group">
-        <label>Enseignant</label>
-        <select v-model="form.enseignant_id">
-          <option value="">-- Aucun --</option>
-          <option v-for="e in enseignants" :key="e.id" :value="e.id">
-            {{ e.nom }} {{ e.prenom }} ({{ e.specialite }})
+        <label>Étudiant *</label>
+        <select v-model="form.etudiant_id" required>
+          <option value="">-- Sélectionner un étudiant --</option>
+          <option v-for="e in etudiants" :key="e.id" :value="e.id">
+            {{ e.nom }} {{ e.prenom }} ({{ e.matricule }}) - {{ e.filiere }}
           </option>
         </select>
-        <span v-if="form.errors.enseignant_id" class="error">{{ form.errors.enseignant_id }}</span>
+        <span v-if="form.errors.etudiant_id" class="error">{{ form.errors.etudiant_id }}</span>
+      </div>
+
+      <div class="form-group">
+        <label>Date *</label>
+        <input v-model="form.date" type="date" required />
+        <span v-if="form.errors.date" class="error">{{ form.errors.date }}</span>
+      </div>
+
+      <div class="form-group">
+        <label>Motif</label>
+        <input v-model="form.motif" type="text" placeholder="Ex: Maladie, Rendez-vous médical..." />
+        <span v-if="form.errors.motif" class="error">{{ form.errors.motif }}</span>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label>
+          <input v-model="form.justifiee" type="checkbox" />
+          Absence justifiée
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Observation</label>
+        <textarea v-model="form.observation" rows="3" placeholder="Remarques supplémentaires..."></textarea>
+        <span v-if="form.errors.observation" class="error">{{ form.errors.observation }}</span>
       </div>
 
       <div class="form-actions">
         <button type="submit" :disabled="form.processing" class="btn-submit">
           {{ form.processing ? 'Enregistrement...' : 'Enregistrer' }}
         </button>
-        <Link href="/etudiants" class="btn-cancel">Annuler</Link>
+        <Link href="/absences" class="btn-cancel">Annuler</Link>
       </div>
     </form>
 
     <div class="navigation">
-      <Link href="/etudiants">Retour à la liste</Link>
+      <Link href="/absences">Retour à la liste</Link>
       <Link href="/">Accueil</Link>
     </div>
   </div>
@@ -97,7 +89,7 @@ function submit() {
 .page { 
   padding: 20px; 
   font-family: Arial, sans-serif;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -117,6 +109,24 @@ h1 {
   margin-bottom: 20px;
 }
 
+.checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
 label { 
   display: block; 
   margin-bottom: 5px;
@@ -124,16 +134,17 @@ label {
   color: #555;
 }
 
-input, select { 
+input, select, textarea { 
   width: 100%; 
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: #51aa2e;
 }

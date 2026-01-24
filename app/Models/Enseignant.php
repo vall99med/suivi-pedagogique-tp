@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Etudiant;
 
 class Enseignant extends Model
 {
-    // Définir la relation One-to-Many avec Etudiant
+    use HasFactory;
+
+    protected $fillable = [
+        'matricule',
+        'nom',
+        'prenom',
+        'specialite',
+    ];
+
+    // Relation avec les étudiants
     public function etudiants()
     {
         return $this->hasMany(Etudiant::class);
